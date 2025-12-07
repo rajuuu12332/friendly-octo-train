@@ -145,6 +145,195 @@
     </div>
 </header>
 
+<main>
+    <div id="grid" class="grid"></div>
+    <div id="timestamp" class="timestamp"></div>
+</main>
+
+<script>
+const HIGHLIGHTS = ["AS-PVP-Carbonemys"];
+const ARK_URLS = [
+    "https://arkdedicated.com/arkuse/cache/officialarkuseserverlist.json",
+    "https://arkdedicated.com/arkuse/cache/officialarkuseserverlist1.json",
+    "https://arkdedicated.com/arkuse/cache/officialarkuseserverlist2.json",
+    "https://arkdedicated.com/arkuse/cache/officialarkuseserverlist3.json"
+];
+
+// Fetch all ARK servers
+async function fetchARK() {
+    const tasks = ARK_URLS.map(url =>
+        fetch(url).then(r => r.json()).catch(()=>[])
+    );
+    const results = await Promise.all(tasks);
+    return results.flat();
+}
+
+// Render cards
+function render(servers, filter = "") {
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+
+    servers
+        .filter(s => s.Name?.toLowerCase().includes(filter))
+        .forEach(server => {
+            const card = document.createElement("div");
+            card.className = "server-card";
+
+            // highlight special server
+            if (HIGHLIGHTS.includes(server.Name)) {
+                card.classList.add("highlight");
+            }
+
+            const online = server.ServerPing > 0;
+
+            card.innerHTML = `
+                <div class="server-header">
+                    <div class="server-name">${server.Name}</div>
+                    <div class="status-pill ${online ? "online" : "offline"}">
+                        ${online ? "ONLINE" : "OFFLINE"}
+                    </div>
+                </div>
+
+                <div class="details">
+                    <div class="row"><span>Map</span><span>${server.MapName}</span></div>
+                    <div class="row"><span>Players</span><span>${server.NumPlayers}/${server.MaxPlayers}</span></div>
+                    <div class="row"><span>Ping</span><span>${server.ServerPing}</span></div>
+                    <div class="row"><span>Day</span><span>${server.DayTime}</span></div>
+                </div>
+            `;
+
+            grid.appendChild(card);
+        });
+
+    document.getElementById("timestamp").textContent =
+        "Last updated: " + new Date().toLocaleTimeString();
+}
+
+// Update loop
+async function update() {
+    const servers = await fetchARK();
+    const filter = document.getElementById("search").value.trim().toLowerCase();
+    render(servers, filter);
+}
+
+setInterval(update, 15000);
+document.getElementById("search").addEventListener("input", update);
+update();
+</script>
+
+</body>
+</html>
+        font-size:1.8rem;
+        font-weight:600;
+    }
+
+    .subtitle {
+        font-size:0.9rem;
+        color:var(--text-dim);
+    }
+
+    .search-box {
+        display:flex;
+        gap:10px;
+        margin-top:6px;
+    }
+
+    .search-box input {
+        flex:1;
+        padding:10px 12px;
+        border-radius:8px;
+        background:var(--bg-card);
+        border:1px solid var(--border-color);
+        color:var(--text-light);
+        outline:none;
+    }
+
+    main {
+        padding:16px;
+    }
+
+    .grid {
+        display:grid;
+        grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+        gap:16px;
+    }
+
+    .server-card {
+        background:var(--bg-card);
+        border:1px solid var(--border-color);
+        border-radius:12px;
+        padding:16px;
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+        transition:0.2s;
+    }
+
+    .server-card:hover {
+        border-color:var(--accent);
+        transform:translateY(-3px);
+    }
+
+    .server-header {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+    }
+
+    .server-name {
+        font-size:1rem;
+        font-weight:600;
+        color:var(--accent);
+    }
+
+    .status-pill {
+        padding:4px 10px;
+        border-radius:20px;
+        font-size:0.75rem;
+        font-weight:600;
+        color:#000;
+    }
+
+    .online { background:var(--good); }
+    .offline { background:var(--bad); }
+
+    .details {
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+    }
+
+    .row {
+        display:flex;
+        justify-content:space-between;
+        font-size:0.9rem;
+    }
+
+    .highlight {
+        box-shadow:0 0 12px rgba(56, 189, 248, 0.4);
+        border-color:#38bdf8 !important;
+    }
+
+    .timestamp {
+        margin-top:16px;
+        text-align:center;
+        font-size:0.85rem;
+        color:var(--text-dim);
+    }
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="title">ARK Server Dashboard</div>
+    <div class="subtitle">Live official ARK server list (auto-updating)</div>
+
+    <div class="search-box">
+        <input id="search" placeholder="Search server by name... (optional)">
+    </div>
+</header>
+
 main>
     <div id="grid" class="grid"></div>
     <div id="timestamp" class="timestamp"></div>
