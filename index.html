@@ -15,15 +15,14 @@
         --accent: #3b82f6;
         --good: #4ade80;
         --bad: #f87171;
+        --warn: #facc15;
     }
-
     body {
         margin:0;
         background:var(--bg-dark);
         color:var(--text-light);
-        font-family: "Segoe UI", Roboto, Arial, sans-serif;
+        font-family:Segoe UI,Arial;
     }
-
     header {
         padding:20px 16px;
         border-bottom:1px solid var(--border-color);
@@ -32,36 +31,65 @@
         flex-direction:column;
         gap:12px;
     }
+    .title { font-size:1.8rem; font-weight:600; }
+    .subtitle { font-size:0.9rem; color:var(--text-dim); }
 
-    .title {
-        font-size:1.8rem;
+    .search-box { display:flex; gap:10px; margin-top:6px; }
+    .search-box input {
+        flex:1; padding:10px 12px; border-radius:8px;
+        background:var(--bg-card); border:1px solid var(--border-color);
+        color:var(--text-light);
+    }
+
+    main { padding:16px; }
+
+    .controls {
+        display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+        margin-bottom:12px;
+    }
+
+    select {
+        background:var(--bg-card);
+        color:var(--text-light);
+        border:1px solid var(--border-color);
+        padding:6px 10px;
+        border-radius:8px;
+    }
+
+    .sort-btn {
+        padding:6px 10px;
+        border-radius:20px;
+        background:var(--bg-card);
+        color:var(--text-dim);
+        border:1px solid var(--border-color);
+        cursor:pointer;
+        font-size:0.8rem;
+    }
+    .sort-btn.active {
+        border-color:var(--accent);
+        color:var(--accent);
         font-weight:600;
     }
 
-    .subtitle {
-        font-size:0.9rem;
-        color:var(--text-dim);
+    /* toggle */
+    .toggle-wrapper {
+        margin-left:auto;
+        display:flex; gap:8px; align-items:center;
+        font-size:0.85rem; color:var(--text-dim);
     }
-
-    .search-box {
-        display:flex;
-        gap:10px;
-        margin-top:6px;
+    .toggle { position:relative; width:40px; height:20px; }
+    .toggle input { opacity:0; width:0; height:0; }
+    .slider {
+        position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0;
+        background:#444; border-radius:999px;
     }
-
-    .search-box input {
-        flex:1;
-        padding:10px 12px;
-        border-radius:8px;
-        background:var(--bg-card);
-        border:1px solid var(--border-color);
-        color:var(--text-light);
-        outline:none;
+    .slider:before {
+        content:""; position:absolute; height:14px; width:14px;
+        left:3px; top:3px; background:white; border-radius:50%;
+        transition:.2s;
     }
-
-    main {
-        padding:16px;
-    }
+    .toggle input:checked + .slider { background:var(--accent); }
+    .toggle input:checked + .slider:before { transform:translateX(18px); }
 
     .grid {
         display:grid;
@@ -72,64 +100,37 @@
     .server-card {
         background:var(--bg-card);
         border:1px solid var(--border-color);
-        border-radius:12px;
         padding:16px;
-        display:flex;
-        flex-direction:column;
-        gap:12px;
-        transition:0.2s;
-    }
-
-    .server-card:hover {
-        border-color:var(--accent);
-        transform:translateY(-3px);
+        border-radius:12px;
+        display:flex; flex-direction:column; gap:12px;
     }
 
     .server-header {
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
+        display:flex; justify-content:space-between; align-items:start;
     }
 
-    .server-name {
-        font-size:1rem;
-        font-weight:600;
-        color:var(--accent);
-    }
-
+    .server-name { font-size:1rem; font-weight:600; color:var(--accent); }
     .status-pill {
-        padding:4px 10px;
-        border-radius:20px;
-        font-size:0.75rem;
-        font-weight:600;
-        color:#000;
+        padding:4px 10px; border-radius:20px; font-size:0.75rem;
+        font-weight:600; color:black;
     }
-
     .online { background:var(--good); }
-    .offline { background:var(--bad); }
+    .offline{ background:var(--bad); }
 
-    .details {
-        display:flex;
-        flex-direction:column;
-        gap:6px;
+    .region-pill {
+        padding:2px 8px; border-radius:12px;
+        border:1px solid var(--border-color);
+        color:var(--text-dim); font-size:0.7rem;
     }
 
-    .row {
-        display:flex;
-        justify-content:space-between;
-        font-size:0.9rem;
-    }
-
-    .highlight {
-        box-shadow:0 0 12px rgba(56, 189, 248, 0.4);
-        border-color:#38bdf8 !important;
-    }
+    .row { display:flex; justify-content:space-between; font-size:0.9rem; }
+    .ping-good { color:var(--good); }
+    .ping-warn { color:var(--warn); }
+    .ping-bad  { color:var(--bad); }
 
     .timestamp {
-        margin-top:16px;
-        text-align:center;
-        font-size:0.85rem;
-        color:var(--text-dim);
+        margin-top:16px; text-align:center;
+        font-size:0.85rem; color:var(--text-dim);
     }
 </style>
 </head>
@@ -141,273 +142,226 @@
     <div class="subtitle">Live official ARK server list (auto-updating)</div>
 
     <div class="search-box">
-        <input id="search" placeholder="Search server by name... (optional)">
+        <input id="search" placeholder="Search server name...">
     </div>
 </header>
 
 <main>
-    <div id="grid" class="grid"></div>
-    <div id="timestamp" class="timestamp"></div>
-</main>
 
-<script>
-const HIGHLIGHTS = ["AS-PVP-Carbonemys"];
-const ARK_URLS = [
-    "https://arkdedicated.com/arkuse/cache/officialarkuseserverlist.json",
-    "https://arkdedicated.com/arkuse/cache/officialarkuseserverlist1.json",
-    "https://arkdedicated.com/arkuse/cache/officialarkuseserverlist2.json",
-    "https://arkdedicated.com/arkuse/cache/officialarkuseserverlist3.json"
-];
+    <div class="controls">
+        <!-- MAP FILTER DROPDOWN (uses MapName directly) -->
+        <select id="mapFilter">
+            <option value="">All Maps</option>
+            <option value="TheIsland">TheIsland</option>
+            <option value="ScorchedEarth">ScorchedEarth</option>
+            <option value="Aberration">Aberration</option>
+            <option value="Extinction">Extinction</option>
+            <option value="Genesis">Genesis</option>
+            <option value="Genesis2">Genesis2</option>
+            <option value="Ragnarok">Ragnarok</option>
+            <option value="Other">Other Maps</option>
+        </select>
 
-// Fetch all ARK servers
-async function fetchARK() {
-    const tasks = ARK_URLS.map(url =>
-        fetch(url).then(r => r.json()).catch(()=>[])
-    );
-    const results = await Promise.all(tasks);
-    return results.flat();
-}
+        <!-- SORT BUTTONS -->
+        <button class="sort-btn" data-sort="players">Players</button>
+        <button class="sort-btn" data-sort="ping">Ping</button>
+        <button class="sort-btn" data-sort="day">Day</button>
+        <button class="sort-btn" data-sort="region">Region</button>
 
-// Render cards
-function render(servers, filter = "") {
-    const grid = document.getElementById("grid");
-    grid.innerHTML = "";
-
-    servers
-        .filter(s => s.Name?.toLowerCase().includes(filter))
-        .forEach(server => {
-            const card = document.createElement("div");
-            card.className = "server-card";
-
-            // highlight special server
-            if (HIGHLIGHTS.includes(server.Name)) {
-                card.classList.add("highlight");
-            }
-
-            const online = server.ServerPing > 0;
-
-            card.innerHTML = `
-                <div class="server-header">
-                    <div class="server-name">${server.Name}</div>
-                    <div class="status-pill ${online ? "online" : "offline"}">
-                        ${online ? "ONLINE" : "OFFLINE"}
-                    </div>
-                </div>
-
-                <div class="details">
-                    <div class="row"><span>Map</span><span>${server.MapName}</span></div>
-                    <div class="row"><span>Players</span><span>${server.NumPlayers}/${server.MaxPlayers}</span></div>
-                    <div class="row"><span>Ping</span><span>${server.ServerPing}</span></div>
-                    <div class="row"><span>Day</span><span>${server.DayTime}</span></div>
-                </div>
-            `;
-
-            grid.appendChild(card);
-        });
-
-    document.getElementById("timestamp").textContent =
-        "Last updated: " + new Date().toLocaleTimeString();
-}
-
-// Update loop
-async function update() {
-    const servers = await fetchARK();
-    const filter = document.getElementById("search").value.trim().toLowerCase();
-    render(servers, filter);
-}
-
-setInterval(update, 15000);
-document.getElementById("search").addEventListener("input", update);
-update();
-</script>
-
-</body>
-</html>
-        font-size:1.8rem;
-        font-weight:600;
-    }
-
-    .subtitle {
-        font-size:0.9rem;
-        color:var(--text-dim);
-    }
-
-    .search-box {
-        display:flex;
-        gap:10px;
-        margin-top:6px;
-    }
-
-    .search-box input {
-        flex:1;
-        padding:10px 12px;
-        border-radius:8px;
-        background:var(--bg-card);
-        border:1px solid var(--border-color);
-        color:var(--text-light);
-        outline:none;
-    }
-
-    main {
-        padding:16px;
-    }
-
-    .grid {
-        display:grid;
-        grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
-        gap:16px;
-    }
-
-    .server-card {
-        background:var(--bg-card);
-        border:1px solid var(--border-color);
-        border-radius:12px;
-        padding:16px;
-        display:flex;
-        flex-direction:column;
-        gap:12px;
-        transition:0.2s;
-    }
-
-    .server-card:hover {
-        border-color:var(--accent);
-        transform:translateY(-3px);
-    }
-
-    .server-header {
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-    }
-
-    .server-name {
-        font-size:1rem;
-        font-weight:600;
-        color:var(--accent);
-    }
-
-    .status-pill {
-        padding:4px 10px;
-        border-radius:20px;
-        font-size:0.75rem;
-        font-weight:600;
-        color:#000;
-    }
-
-    .online { background:var(--good); }
-    .offline { background:var(--bad); }
-
-    .details {
-        display:flex;
-        flex-direction:column;
-        gap:6px;
-    }
-
-    .row {
-        display:flex;
-        justify-content:space-between;
-        font-size:0.9rem;
-    }
-
-    .highlight {
-        box-shadow:0 0 12px rgba(56, 189, 248, 0.4);
-        border-color:#38bdf8 !important;
-    }
-
-    .timestamp {
-        margin-top:16px;
-        text-align:center;
-        font-size:0.85rem;
-        color:var(--text-dim);
-    }
-</style>
-</head>
-
-<body>
-
-<header>
-    <div class="title">ARK Server Dashboard</div>
-    <div class="subtitle">Live official ARK server list (auto-updating)</div>
-
-    <div class="search-box">
-        <input id="search" placeholder="Search server by name... (optional)">
+        <!-- ONLINE TOGGLE -->
+        <div class="toggle-wrapper">
+            Online only
+            <label class="toggle">
+                <input type="checkbox" id="onlineToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
     </div>
-</header>
 
-main>
     <div id="grid" class="grid"></div>
     <div id="timestamp" class="timestamp"></div>
+
 </main>
 
 <script>
-const HIGHLIGHTS = ["AS-PVP-Carbonemys"];
+/* CORS Proxy */
+const PROXY = "https://api.allorigins.win/raw?url=";
+
 const ARK_URLS = [
-    "https://arkdedicated.com/arkuse/cache/officialarkuseserverlist.json",
-    "https://arkdedicated.com/arkuse/cache/officialarkuseserverlist1.json",
-    "https://arkdedicated.com/arkuse/cache/officialarkuseserverlist2.json",
-    "https://arkdedicated.com/arkuse/cache/officialarkuseserverlist3.json"
+    PROXY + encodeURIComponent("https://arkdedicated.com/arkuse/cache/officialarkuseserverlist.json"),
+    PROXY + encodeURIComponent("https://arkdedicated.com/arkuse/cache/officialarkuseserverlist1.json"),
+    PROXY + encodeURIComponent("https://arkdedicated.com/arkuse/cache/officialarkuseserverlist2.json"),
+    PROXY + encodeURIComponent("https://arkdedicated.com/arkuse/cache/officialarkuseserverlist3.json")
 ];
 
-// Fetch all ARK servers
+let serversCache = [];
+let currentSort = { field: null, asc: true };
+let showOnlineOnly = false;
+
+/* REGION ORDER */
+const REGION_PRIORITY = {
+    "AS": 1,
+    "EU": 2,
+    "OC": 3,
+    "NA": 4,
+    "SA": 5,
+    "RU": 6,
+    "CN": 7,
+    "Unknown": 99
+};
+
+/* main maps list for "Other Maps" logic */
+const MAIN_MAPS = [
+    "TheIsland",
+    "ScorchedEarth",
+    "Aberration",
+    "Extinction",
+    "Genesis",
+    "Genesis2",
+    "Ragnarok"
+];
+
+function detectRegion(name) {
+    const prefix = name.split("-")[0].toUpperCase();
+    return REGION_PRIORITY[prefix] ? prefix : "Unknown";
+}
+
+function getPingClass(ping) {
+    if (ping <= 0) return "";
+    if (ping <= 60) return "ping-good";
+    if (ping <= 120) return "ping-warn";
+    return "ping-bad";
+}
+
 async function fetchARK() {
     const tasks = ARK_URLS.map(url =>
-        fetch(url).then(r => r.json()).catch(()=>[])
+        fetch(url).then(r => r.json()).catch(() => [])
     );
     const results = await Promise.all(tasks);
     return results.flat();
 }
 
-// Render cards
-function render(servers, filter = "") {
+function render(servers) {
     const grid = document.getElementById("grid");
     grid.innerHTML = "";
 
-    servers
-        .filter(s => s.Name?.toLowerCase().includes(filter))
-        .forEach(server => {
-            const card = document.createElement("div");
-            card.className = "server-card";
+    const search = document.getElementById("search").value.toLowerCase();
+    const mapFilter = document.getElementById("mapFilter").value;
 
-            // highlight special server
-            if (HIGHLIGHTS.includes(server.Name)) {
-                card.classList.add("highlight");
-            }
+    let list = servers.map(s => ({
+        ...s,
+        Region: detectRegion(s.Name)
+    }));
 
-            const online = server.ServerPing > 0;
+    // text search
+    if (search) {
+        list = list.filter(s => s.Name.toLowerCase().includes(search));
+    }
 
-            card.innerHTML = `
-                <div class="server-header">
-                    <div class="server-name">${server.Name}</div>
-                    <div class="status-pill ${online ? "online" : "offline"}">
-                        ${online ? "ONLINE" : "OFFLINE"}
-                    </div>
-                </div>
+    // online only
+    if (showOnlineOnly) {
+        list = list.filter(s => s.ServerPing > 0);
+    }
 
-                <div class="details">
-                    <div class="row"><span>Map</span><span>${server.MapName}</span></div>
-                    <div class="row"><span>Players</span><span>${server.NumPlayers}/${server.MaxPlayers}</span></div>
-                    <div class="row"><span>Ping</span><span>${server.ServerPing}</span></div>
-                    <div class="row"><span>Day</span><span>${server.DayTime}</span></div>
-                </div>
-            `;
+    // map filter based on raw MapName from JSON
+    if (mapFilter) {
+        if (mapFilter === "Other") {
+            list = list.filter(s => !MAIN_MAPS.includes(s.MapName));
+        } else {
+            list = list.filter(s => s.MapName === mapFilter);
+        }
+    }
 
-            grid.appendChild(card);
+    // sorting
+    if (currentSort.field) {
+        list.sort((a, b) => {
+            const asc = currentSort.asc ? 1 : -1;
+
+            if (currentSort.field === "players")
+                return ((a.NumPlayers || 0) - (b.NumPlayers || 0)) * asc;
+
+            if (currentSort.field === "ping")
+                return ((a.ServerPing || 0) - (b.ServerPing || 0)) * asc;
+
+            if (currentSort.field === "day")
+                return ((a.DayTime || "").toString().localeCompare((b.DayTime || "").toString())) * asc;
+
+            if (currentSort.field === "region")
+                return (REGION_PRIORITY[a.Region] - REGION_PRIORITY[b.Region]) * asc;
+
+            return 0;
         });
+    }
+
+    // render cards
+    list.forEach(server => {
+        const online = server.ServerPing > 0;
+        const pingClass = getPingClass(server.ServerPing);
+
+        const card = document.createElement("div");
+        card.className = "server-card";
+
+        card.innerHTML = `
+            <div class="server-header">
+                <div>
+                    <div class="server-name">${server.Name}</div>
+                    <div class="region-pill">${server.Region}</div>
+                </div>
+                <div class="status-pill ${online ? "online" : "offline"}">
+                    ${online ? "ONLINE" : "OFFLINE"}
+                </div>
+            </div>
+
+            <div class="details">
+                <div class="row"><span>Map</span><span>${server.MapName}</span></div>
+                <div class="row"><span>Players</span><span>${server.NumPlayers}/${server.MaxPlayers}</span></div>
+                <div class="row"><span>Ping</span><span class="${pingClass}">${server.ServerPing}</span></div>
+                <div class="row"><span>Day</span><span>${server.DayTime}</span></div>
+            </div>
+        `;
+
+        grid.appendChild(card);
+    });
 
     document.getElementById("timestamp").textContent =
         "Last updated: " + new Date().toLocaleTimeString();
 }
 
-// Update loop
-async function update() {
-    const servers = await fetchARK();
-    const filter = document.getElementById("search").value.trim().toLowerCase();
-    render(servers, filter);
+async function update(fetchNew = true) {
+    if (fetchNew) serversCache = await fetchARK();
+    render(serversCache);
 }
 
-setInterval(update, 15000);
-document.getElementById("search").addEventListener("input", update);
-update();
+document.getElementById("search").addEventListener("input", () => update(false));
+document.getElementById("mapFilter").addEventListener("change", () => update(false));
+
+document.getElementById("onlineToggle").addEventListener("change", e => {
+    showOnlineOnly = e.target.checked;
+    update(false);
+});
+
+document.querySelectorAll(".sort-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const field = btn.dataset.sort;
+
+        if (currentSort.field === field) {
+            currentSort.asc = !currentSort.asc;
+        } else {
+            currentSort.field = field;
+            currentSort.asc = true;
+        }
+
+        document.querySelectorAll(".sort-btn")
+            .forEach(b => b.classList.remove("active"));
+
+        btn.classList.add("active");
+
+        update(false);
+    });
+});
+
+setInterval(() => update(true), 15000);
+update(true);
 </script>
 
 </body>
